@@ -274,7 +274,7 @@ class ConversionUtils {
             uuid +
             "\nmajor: " +
             major.toString() +
-            "\nnminor" +
+            "\nminor" +
             minor.toString(),
         name: 'Treel beacon parsed data:>> ');
     return TreelBeacon(uuid, minor);

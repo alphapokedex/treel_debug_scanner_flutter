@@ -13,6 +13,7 @@ dependencies:
   cupertino_icons: ^1.0.2
   permission_handler: ^9.2.0
   flutter_reactive_ble: ^5.0.2
+  convert: ^3.0.1
 
 dev_dependencies:
   flutter_test:
@@ -21,34 +22,3 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
-
-  
-  
-  
-  
-
-  
-  
-
-  
-  
-
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  

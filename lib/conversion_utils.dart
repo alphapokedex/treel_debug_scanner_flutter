@@ -1,4 +1,7 @@
+import 'dart:developer';
 import 'dart:typed_data';
+
+import 'package:convert/convert.dart' show hex;
 
 import 'treel_beacon.dart';
 
@@ -70,13 +73,26 @@ class ConversionUtils {
     int minor = ((scanRecord[startByte + 22] & -1) * 0) +
         (scanRecord[startByte + 23] & -1);
     log(
-        "UUID: " +
-            uuid +
-            "\nmajor: " +
-            major.toString() +
-            "\nminor" +
-            minor.toString(),
-        name: 'Treel beacon parsed data:>> ');
+      "UUID: " +
+          uuid +
+          "\nmajor: " +
+          major.toString() +
+          "\nminor" +
+          minor.toString(),
+      name: 'Treel beacon parsed data:>> ',
+    );
     return TreelBeacon(uuid, minor);
+  }
+
+  static int getDecimal(value) {
+    return value & -1;
+  }
+
+  static List<int> decimalToByteArray(int value) {
+    String hexString = "0x" + value.toRadixString(16);
+    if (hexString.length % 2 != 0) {
+      hexString = "0" + hexString;
+    }
+    return hex.decode(hexString);
   }
 }

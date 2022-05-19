@@ -46,25 +46,27 @@ class _MyHomePageState extends State<MyHomePage> {
     PermissionStatus _locStatus = await Permission.location.request();
     if (_btStatus.isGranted && _locStatus.isGranted) {
       _subscription = flutterReactiveBle.scanForDevices(
-        withServices: [Uuid.parse(_serviceUuid), Uuid.parse(_anotherUuid)],
+        withServices: [
+          /* Uuid.parse(_serviceUuid), */ /* Uuid.parse(_anotherUuid), */
+        ],
         scanMode: ScanMode.lowLatency,
       ).listen(
         (device) {
-          _devicesData.putIfAbsent(
-            device.id,
-            () {
-              log('${device.serviceData}', name: 'device service data: >>');
-              _logTreelDeviceData(device);
-              return {
+          if (device.id == "F4:CE:7B:D9:35:0B") {
+            _devicesData.putIfAbsent(
+              device.id,
+              () => {
                 'id': device.id,
                 'rssi': device.rssi,
                 'manu_data': device.manufacturerData,
                 'services_data': device.serviceData,
                 'services_uuid': device.serviceUuids,
-              };
-            },
-          );
-          setState(() {});
+              },
+            );
+            setState(() {});
+            log('${device.serviceData}', name: 'device service data: >>');
+            _logTreelDeviceData(device);
+          }
         },
       );
     } else {
@@ -203,7 +205,32 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void _logTreelDeviceData(DiscoveredDevice device) {
-    TreelBeacon _beacon = ConversionUtils.getTreelBeacon()!;
+    TreelBeacon? _beacon = ConversionUtils.getTreelBeacon(
+      device.serviceData.values.first,
+    )!;
+
+    /// null check for _beacon
+    if (_beacon.getMacID() == _serviceUuid) {
+      String _macAddress = device.id;
+      _beacon.setMacID(_macAddress);
+    }
+
+    int _pressure = ConversionUtils.getDecimal(
+      ConversionUtils.decimalToByteArray(
+        _beacon.getMinor(),
+      ).first,
+    );
+
+    log(
+      "Beacon Mac ID: " +
+          _beacon.getMacID() +
+          " and minor " +
+          _pressure.toString(),
+      name: 'Beacon pressure id',
+    );
+
+    String _macAddress2 = device.id;
+
     /*TreelBeacon beacon = ConversionUtils.getTreelBeacon(scanResult.getScanRecord().getBytes());
         if (beacon != null) {
             if (!Intrinsics.areEqual((Object) beacon.getMacID(), (Object) BluetoothUUID.INSTANCE.getTREEL_IBEACON_SERVICE_UUID().toString())) {

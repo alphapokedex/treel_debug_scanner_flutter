@@ -15,7 +15,7 @@ brew install swift-protobuf
 3. If you don't have Dart SDK on your computer please install it.
 
 ```sh
-brew isntall dart
+brew install dart
 ```
 
 4. Run `pub global activate protoc_plugin`
@@ -25,6 +25,7 @@ brew isntall dart
 ```sh
 protoc --dart_out=../lib/src/generated ./bledata.proto
 protoc --swift_out=../ios/Classes/BleData ./bledata.proto
+protoc --kotlin_out=ble_packages/reactive_ble_mobile/android/src/main/kotlin/com/signify/hue/flutterreactiveble ble_packages/reactive_ble_mobile/protos/bledata.proto
 ```
 
 NOTE: If directory `../lib/generated` or `./ios/Classes/BleData` does not exist please create it.

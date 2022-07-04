@@ -205,9 +205,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void _logTreelDeviceData(DiscoveredDevice device) {
-    TreelBeacon? _beacon = ConversionUtils.getTreelBeacon(
-      device.serviceData.values.first,
-    )!;
+    TreelBeacon? _beacon = ConversionUtils.getTreelBeacon(device.byteData)!;
 
     /// null check for _beacon
     if (_beacon.getMacID() == _serviceUuid) {
@@ -222,10 +220,7 @@ class _MyHomePageState extends State<MyHomePage> {
     );
 
     log(
-      "Beacon Mac ID: " +
-          _beacon.getMacID() +
-          " and minor " +
-          _pressure.toString(),
+      "Beacon Mac ID: ${_beacon.getMacID()} and pressure: ${_pressure.toString()}",
       name: 'Beacon pressure id',
     );
 

@@ -39,32 +39,29 @@ class _MyHomePageState extends State<MyHomePage> {
   final flutterReactiveBle = FlutterReactiveBle();
   late StreamSubscription _subscription;
 
-  final Map<String, dynamic> _devicesData = {};
+  final List _devicesData = [];
 
   Future<void> _startScan(BuildContext context) async {
-    PermissionStatus _btStatus = await Permission.bluetooth.request();
-    PermissionStatus _locStatus = await Permission.location.request();
-    if (_btStatus.isGranted && _locStatus.isGranted) {
+    var _btStatus = await Permission.bluetooth.request().isGranted;
+    var _locStatus = await Permission.location.request().isGranted;
+    var bluetoothConnectStatus =
+        await Permission.bluetoothConnect.request().isGranted;
+    var scanStatus = await Permission.bluetoothScan.request().isGranted;
+
+    if (scanStatus && bluetoothConnectStatus && _locStatus) {
       _subscription = flutterReactiveBle.scanForDevices(
         withServices: [
-          /* Uuid.parse(_serviceUuid), */ /* Uuid.parse(_anotherUuid), */
+          Uuid.parse(_serviceUuid),
+          Uuid.parse(_anotherUuid),
         ],
         scanMode: ScanMode.lowLatency,
       ).listen(
         (device) {
           if (device.id == "F4:CE:7B:D9:35:0B") {
-            _devicesData.putIfAbsent(
-              device.id,
-              () => {
-                'id': device.id,
-                'rssi': device.rssi,
-                'manu_data': device.manufacturerData,
-                'services_data': device.serviceData,
-                'services_uuid': device.serviceUuids,
-              },
+            _devicesData.add(
+              device.manufacturerData,
             );
             setState(() {});
-            log('${device.serviceData}', name: 'device service data: >>');
             _logTreelDeviceData(device);
           }
         },
@@ -140,63 +137,8 @@ class _MyHomePageState extends State<MyHomePage> {
         body: Scrollbar(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(18.0),
-            child: Table(
-              children: [
-                const TableRow(
-                  children: [
-                    Padding(
-                      padding: EdgeInsets.symmetric(vertical: 5),
-                      child: Text('Device ID'),
-                    ),
-                    // Text('Rssi'),
-                    // Text('Manufacturer Data'),
-                    Padding(
-                      padding: EdgeInsets.symmetric(vertical: 5),
-                      child: Text('Service Data'),
-                    ),
-                  ],
-                ),
-                ..._devicesData.values
-                    .map(
-                      (_e) => TableRow(
-                        children: [
-                          InkWell(
-                            child: Text(_e['id'].toString()),
-                            onTap: () {
-                              flutterReactiveBle
-                                  .connectToAdvertisingDevice(
-                                id: _e['id'],
-                                withServices: [
-                                  Uuid.parse(_serviceUuid),
-                                  Uuid.parse(_anotherUuid)
-                                ],
-                                prescanDuration: const Duration(minutes: 2),
-                                connectionTimeout: const Duration(minutes: 1),
-                              )
-                                  .listen(
-                                (connectionState) {
-                                  log(
-                                    connectionState.connectionState.name,
-                                    name: connectionState.deviceId,
-                                  );
-                                },
-                                onError: (dynamic error) {
-                                  log(
-                                    error.runtimeType.toString(),
-                                    name: 'Error on connect: ',
-                                  );
-                                },
-                              );
-                            },
-                          ),
-                          Text(
-                            _e.toString(),
-                          ),
-                        ],
-                      ),
-                    )
-                    .toList()
-              ],
+            child: Column(
+              children: _devicesData.map((_e) => Text(_e.toString())).toList(),
             ),
           ),
         ),
@@ -205,9 +147,12 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void _logTreelDeviceData(DiscoveredDevice device) {
-    TreelBeacon? _beacon = ConversionUtils.getTreelBeacon(device.byteData)!;
+    TreelBeacon? _beacon = ConversionUtils.getTreelBeacon(
+      device.manufacturerData,
+    );
 
-    /// null check for _beacon
+    if(_beacon == null) return; 
+
     if (_beacon.getMacID() == _serviceUuid) {
       String _macAddress = device.id;
       _beacon.setMacID(_macAddress);
@@ -223,95 +168,5 @@ class _MyHomePageState extends State<MyHomePage> {
       "Beacon Mac ID: ${_beacon.getMacID()} and pressure: ${_pressure.toString()}",
       name: 'Beacon pressure id',
     );
-
-    String _macAddress2 = device.id;
-
-    /*TreelBeacon beacon = ConversionUtils.getTreelBeacon(scanResult.getScanRecord().getBytes());
-        if (beacon != null) {
-            if (!Intrinsics.areEqual((Object) beacon.getMacID(), (Object) BluetoothUUID.INSTANCE.getTREEL_IBEACON_SERVICE_UUID().toString())) {
-                String macAddress = scanResult.getBleDevice().getMacAddress();
-                Intrinsics.checkNotNullExpressionValue(macAddress, "scanResult.bleDevice.macAddress");
-                beacon.setMacID(macAddress);
-            }
-            int pressure = ConversionUtils.getDecimal(ConversionUtils.decimalToByteArray(beacon.getMinor())[1]);
-            Timber.m30d("Beacon Mac ID: " + beacon.getMacID() + " and minor " + pressure, new Object[0]);
-            DeviceDataParser deviceDataParser = DeviceDataParser.INSTANCE;
-            String macAddress2 = scanResult.getBleDevice().getMacAddress();
-            Intrinsics.checkNotNullExpressionValue(macAddress2, "scanResult.bleDevice.macAddress");
-            String[] receivedData = deviceDataParser.parseTreelBeaconData(macAddress2, String.valueOf(pressure));
-            int i = this.logsCounter + 1;
-            this.logsCounter = i;
-            receivedData[0] = String.valueOf(i);
-            LinkedHashMap<String, String[]> linkedHashMap = this.devicesData;
-            if (linkedHashMap != null) {
-                String[] strArr = (String[]) linkedHashMap.put(scanResult.getBleDevice().getMacAddress(), receivedData);
-            }
-            MutableLiveData<LinkedHashMap<String, String[]>> mutableLiveData = this.devices;
-            if (mutableLiveData != null) {
-                mutableLiveData.setValue(this.devicesData);
-            }
-            try {
-                if (this.logsWriter == null) {
-                    writeHeaders();
-                }
-                writeLog(this.logsWriter, receivedData);
-            } catch (Exception e) {
-                Timber.m34e(e);
-            }
-        } else {
-            BluetoothUUID bluetoothUUID = BluetoothUUID.INSTANCE;
-            ScanRecord scanRecord = scanResult.getScanRecord();
-            Intrinsics.checkNotNullExpressionValue(scanRecord, "scanResult.scanRecord");
-            if (bluetoothUUID.isTreelBleDevice(scanRecord)) {
-                Timber.m30d(Intrinsics.stringPlus("Device Detected Treel: ", scanResult.getBleDevice().getMacAddress()), new Object[0]);
-                String[] receivedData2 = getParsedData(scanResult);
-                int i2 = this.logsCounter + 1;
-                this.logsCounter = i2;
-                receivedData2[0] = String.valueOf(i2);
-                LinkedHashMap<String, String[]> linkedHashMap2 = this.devicesData;
-                if (linkedHashMap2 != null) {
-                    String[] strArr2 = (String[]) linkedHashMap2.put(scanResult.getBleDevice().getMacAddress(), receivedData2);
-                }
-                MutableLiveData<LinkedHashMap<String, String[]>> mutableLiveData2 = this.devices;
-                if (mutableLiveData2 != null) {
-                    mutableLiveData2.setValue(this.devicesData);
-                }
-                try {
-                    if (this.logsWriter == null) {
-                        writeHeaders();
-                    }
-                    writeLog(this.logsWriter, receivedData2);
-                } catch (Exception e2) {
-                    Timber.m34e(e2);
-                }
-            } else {
-                BluetoothUUID bluetoothUUID2 = BluetoothUUID.INSTANCE;
-                ScanRecord scanRecord2 = scanResult.getScanRecord();
-                Intrinsics.checkNotNullExpressionValue(scanRecord2, "scanResult.scanRecord");
-                if (bluetoothUUID2.isCradlerDevice(scanRecord2) && this.deviceType != 1) {
-                    Timber.m30d(Intrinsics.stringPlus("Device Detected Cradler: ", scanResult.getBleDevice().getMacAddress()), new Object[0]);
-                    String[] receivedData3 = getParsedData(scanResult);
-                    int i3 = this.logsCounter + 1;
-                    this.logsCounter = i3;
-                    receivedData3[0] = String.valueOf(i3);
-                    LinkedHashMap<String, String[]> linkedHashMap3 = this.devicesData;
-                    if (linkedHashMap3 != null) {
-                        String[] strArr3 = (String[]) linkedHashMap3.put(scanResult.getBleDevice().getMacAddress(), receivedData3);
-                    }
-                    MutableLiveData<LinkedHashMap<String, String[]>> mutableLiveData3 = this.devices;
-                    if (mutableLiveData3 != null) {
-                        mutableLiveData3.setValue(this.devicesData);
-                    }
-                    try {
-                        if (this.logsWriter == null) {
-                            writeHeaders();
-                        }
-                        writeLog(this.logsWriter, receivedData3);
-                    } catch (Exception e3) {
-                        Timber.m34e(e3);
-                    }
-                }
-            }
-        }*/
   }
 }

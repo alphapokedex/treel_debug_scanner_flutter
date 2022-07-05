@@ -86,9 +86,9 @@ packages:
   flutter_reactive_ble:
     dependency: "direct main"
     description:
-      path: "ble_packages/flutter_reactive_ble"
-      relative: true
-    source: path
+      name: flutter_reactive_ble
+      url: "https://pub.dartlang.org"
+    source: hosted
     version: "5.0.2"
   flutter_test:
     dependency: "direct dev"
@@ -189,16 +189,16 @@ packages:
   reactive_ble_mobile:
     dependency: transitive
     description:
-      path: "ble_packages/reactive_ble_mobile"
-      relative: true
-    source: path
+      name: reactive_ble_mobile
+      url: "https://pub.dartlang.org"
+    source: hosted
     version: "5.0.2"
   reactive_ble_platform_interface:
     dependency: transitive
     description:
-      path: "ble_packages/reactive_ble_platform_interface"
-      relative: true
-    source: path
+      name: reactive_ble_platform_interface
+      url: "https://pub.dartlang.org"
+    source: hosted
     version: "5.0.2"
   sky_engine:
     dependency: transitive
